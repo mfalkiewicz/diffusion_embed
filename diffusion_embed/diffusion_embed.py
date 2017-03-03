@@ -42,13 +42,13 @@ def extract_correlation_matrix(data_filename, confounds_filename, atlas_name = "
     
     return correlation_matrix
 
-def compute_matrices(data_volumes, confounds, subject_ids, runs, output_dir = os.getcwd()):
+def compute_matrices(data_volumes, confounds, subject_ids, runs, output_file = "embeddings.hdf5"):
     #get confounds
     #get data files
     
 #    data_name = data.func[0]
 #    confounds_name = data.confounds
-    f = h5py.File(output_dir + os.sep + "affinity-matrices.hdf5", "w")
+    f = h5py.File(output_file, "w")
     
     for i in xrange(len(data_volumes)):
         subject = subject_ids[i]
