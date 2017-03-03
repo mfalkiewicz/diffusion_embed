@@ -4,9 +4,13 @@ import pandas as pd
 import scipy.optimize as opt
 from scipy.special import erf
 from .due import due, Doi
+from scipy.spatial.distance import pdist, squareform
+import scipy.sparse as sps
+from scipy import linalg
 
 from nilearn import datasets, plotting
-from nilearn.input_data import NiftiLabelMasker, NiftiMapsMasker
+#from nilearn.input_data import NiftiLabelMasker, NiftiMapsMasker
+from nilearn.input_data import NiftiLabelsMasker, NiftiMapsMasker
 from nilearn.connectome import ConnectivityMeasure
 
 import h5py
@@ -222,7 +226,18 @@ def compute_matrices(data_volumes, confounds, subject_ids, runs, output_file = "
                 sgrp = f.create_group(subject+"/"+run+"/"+atlas+"/"+correlation_measure)
                 correlation_matrix = extract_correlation_matrix(data_name, confounds_name, atlas_name = atlas, correlation_type=correlation_measure)
                 #mat = f[subject][run][atlas][correlation_measure]['affinity_matrix'][()]
-                affinity_matrix = compute_affinity(correlation_matrix)
+                try:
+                    nn_mat = compute_nearest_neighbor_graph(correlation_matrix)
+                    nn_mat = np.around(nn_mat.todense(), decimals = 5)
+                    E,V = linalg.eigh(nn_mat)
+                except ValueError:
+                    E = np.asarray([-1,-1,-1])
+                if any(E < 0):
+                    method='affinity'
+                    affinity_matrix = compute_affinity(correlation_matrix)
+                else:
+                    method='nearest-neighbor'
+                    affinity_matrix = nn_mat
                 embedding, res = compute_diffusion_map(affinity_matrix)
                 v=res['vectors']
                 lambdas = res['orig_lambdas']
@@ -233,7 +248,7 @@ def compute_matrices(data_volumes, confounds, subject_ids, runs, output_file = "
                 dset[...]=lambdas
                 dset = sgrp.create_dataset("v", v.shape, dtype=v.dtype)
                 dset[...]=v
-
+                dset= sgrp.create_dataset("affinity_matrix_type", data = method)
     f.close()
 
 # Use duecredit (duecredit.org) to provide a citation to relevant work to
