@@ -227,13 +227,12 @@ def compute_matrices(data_volumes, confounds, subject_ids, runs, output_file = "
                 v=res['vectors']
                 lambdas = res['orig_lambdas']
 
-                dset = sgrp.create_dataset("affinity_matrix", correlation_matrix.shape, dtype=correlation_matrix.dtype)
+                dset = sgrp.create_dataset("correlation_matrix", correlation_matrix.shape, dtype=correlation_matrix.dtype)
                 dset[...]=correlation_matrix
                 dset = sgrp.create_dataset("lambdas", lambdas.shape, dtype=lambdas.dtype)
                 dset[...]=lambdas
                 dset = sgrp.create_dataset("v", v.shape, dtype=v.dtype)
                 dset[...]=v
-
 
     f.close()
 
