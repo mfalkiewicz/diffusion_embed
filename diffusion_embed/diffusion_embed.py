@@ -42,38 +42,6 @@ def extract_correlation_matrix(data_filename, confounds_filename, atlas_name = "
     
     return correlation_matrix
 
-def compute_matrices(data_volumes, confounds, subject_ids, runs, output_file = "embeddings.hdf5"):
-    #get confounds
-    #get data files
-    
-#    data_name = data.func[0]
-#    confounds_name = data.confounds
-    f = h5py.File(output_file, "w")
-    
-    for i in xrange(len(data_volumes)):
-        subject = subject_ids[i]
-        run = runs[i]
-        data_name = data_volumes[i]
-        confounds_name = confounds[i]
-        for atlas in ["destrieux_2009", "harvard_oxford", "aal"]:
-            print "using atlas "+atlas
-            for affinity_measure in ["correlation", "partial correlation", "precision"]:
-                print "computing "+affinity_measure+" matrix"
-                sgrp = f.create_group(subject+"/"+run+"/"+atlas+"/"+affinity_measure)
-                correlation_matrix = extract_correlation_matrix(data_name, confounds_name, atlas_name = atlas, correlation_type=affinity_measure)
-                dset = sgrp.create_dataset("affinity_matrix", correlation_matrix.shape, dtype=correlation_matrix.dtype)
-                dset[...]=correlation_matrix
-    f.close()
-
-# Use duecredit (duecredit.org) to provide a citation to relevant work to
-# be cited. This does nothing, unless the user has duecredit installed,
-# And calls this with duecredit (as in `python -m duecredit script.py`):
-due.cite(Doi("10.1167/13.9.30"),
-         description="Template project for small scientific Python projects",
-         tags=["reference-implementation"],
-         path='diffusion_embed')
-
-
 def compute_nearest_neighbor_graph(K, n_neighbors=50):
     idx = np.argsort(K, axis=1)
     col = idx[:, -n_neighbors:].flatten()
@@ -84,6 +52,7 @@ def compute_nearest_neighbor_graph(K, n_neighbors=50):
     K = sps.csr_matrix((K.flat[idx1[0]*A1.shape[1] + idx1[1]],
                         A1.indices, A1.indptr))
     return K
+
 
 
 def compute_affinity(X, method='markov', eps=None):
@@ -232,23 +201,53 @@ def compute_diffusion_map(L, alpha=0.5, n_components=None, diffusion_time=0,
                   n_components_auto=n_components_auto)
     return embedding, result
 
-def embed_data(data_file_name):
-    f = h5py.File(data_file_name,'r+')
-    for subject in f.keys():
-        for run in f[subject].keys():
-            for atlas in f[subject][run].keys():
-                for corr_type in f[subject][run][atlas].keys():
-                    mat = f[subject][run][atlas][corr_type]['affinity_matrix'][()]
-                    affinity_matrix = compute_affinity(mat)
-                    embedding, res = compute_diffusion_map(affinity_matrix)
-                    v=res['vectors']
-                    lambdas = res['orig_lambdas']
-                    grp = f[subject][run][atlas][corr_type]
-                    dset = grp.create_dataset("lambdas", lambdas.shape, dtype=lambdas.dtype)
-                    dset[...]=lambdas
-                    dset = grp.create_dataset("v", v.shape, dtype=v.dtype)
-                    dset[...]=v
+
+def compute_matrices(data_volumes, confounds, subject_ids, runs, output_file = "embeddings.hdf5"):
+    #get confounds
+    #get data files
+    
+#    data_name = data.func[0]
+#    confounds_name = data.confounds
+    f = h5py.File(output_file, "w")
+    
+    for i in xrange(len(data_volumes)):
+        subject = subject_ids[i]
+        run = runs[i]
+        data_name = data_volumes[i]
+        confounds_name = confounds[i]
+        for atlas in ["destrieux_2009", "harvard_oxford", "aal"]:
+            print "using atlas "+atlas
+            for correlation_measure in ["correlation", "partial correlation", "precision"]:
+                print "computing "+correlation_measure+" matrix"
+                sgrp = f.create_group(subject+"/"+run+"/"+atlas+"/"+correlation_measure)
+                correlation_matrix = extract_correlation_matrix(data_name, confounds_name, atlas_name = atlas, correlation_type=correlation_measure)
+                #mat = f[subject][run][atlas][correlation_measure]['affinity_matrix'][()]
+                affinity_matrix = compute_affinity(correlation_matrix)
+                embedding, res = compute_diffusion_map(affinity_matrix)
+                v=res['vectors']
+                lambdas = res['orig_lambdas']
+
+                dset = sgrp.create_dataset("affinity_matrix", correlation_matrix.shape, dtype=correlation_matrix.dtype)
+                dset[...]=correlation_matrix
+                dset = sgrp.create_dataset("lambdas", lambdas.shape, dtype=lambdas.dtype)
+                dset[...]=lambdas
+                dset = sgrp.create_dataset("v", v.shape, dtype=v.dtype)
+                dset[...]=v
+
+
     f.close()
+
+# Use duecredit (duecredit.org) to provide a citation to relevant work to
+# be cited. This does nothing, unless the user has duecredit installed,
+# And calls this with duecredit (as in `python -m duecredit script.py`):
+due.cite(Doi("10.1167/13.9.30"),
+         description="Template project for small scientific Python projects",
+         tags=["reference-implementation"],
+         path='diffusion_embed')
+
+
+
+
 
 
 
