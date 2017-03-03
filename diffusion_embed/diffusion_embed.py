@@ -232,12 +232,12 @@ def compute_matrices(data_volumes, confounds, subject_ids, runs, output_file = "
                     E,V = linalg.eigh(nn_mat)
                 except ValueError:
                     E = np.asarray([-1,-1,-1])
-                if any(E < 0):
-                    method='affinity'
-                    affinity_matrix = compute_affinity(correlation_matrix)
-                else:
+                if not(any(E < 0)) and (np.all(nn_mat.transpose() == nn_mat)):
                     method='nearest-neighbor'
                     affinity_matrix = nn_mat
+                else:
+                    method='affinity'
+                    affinity_matrix = compute_affinity(correlation_matrix)
                 embedding, res = compute_diffusion_map(affinity_matrix)
                 v=res['vectors']
                 lambdas = res['orig_lambdas']
