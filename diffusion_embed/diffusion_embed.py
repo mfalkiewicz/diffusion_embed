@@ -61,7 +61,8 @@ def compute_matrices(data_volumes, confounds, subject_ids, runs, output_dir = os
                 print "computing "+affinity_measure+" matrix"
                 sgrp = f.create_group(subject+"/"+run+"/"+atlas+"/"+affinity_measure)
                 correlation_matrix = extract_correlation_matrix(data_name, confounds_name, atlas_name = atlas, correlation_type=affinity_measure)
-                sgrp.create_dataset("affinity_matrix", correlation_matrix.shape, dtype=correlation_matrix.dtype)
+                dset = sgrp.create_dataset("affinity_matrix", correlation_matrix.shape, dtype=correlation_matrix.dtype)
+                dset[...]=correlation_matrix
     f.close()
 
 # Use duecredit (duecredit.org) to provide a citation to relevant work to
