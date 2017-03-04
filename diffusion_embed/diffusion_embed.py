@@ -239,7 +239,9 @@ def compute_matrices(data_volumes, confounds, subject_ids, runs, output_file = "
                     save_create_dataset(path_to_node, "correlation", correlation_matrix, f, overwrite)
                 if (overwrite == True) or not(path_to_node+"affinity" in f):
                     try:
-                        nn_mat = compute_nearest_neighbor_graph(correlation_matrix, n_neighbors = int(round(correlation_matrix.shape[0]*0.1)))
+			nn = int(round(correlation_matrix.shape[0]*0.1))
+			print("knn: %d" % nn)
+                        nn_mat = compute_nearest_neighbor_graph(correlation_matrix, n_neighbors = nn)
                         nn_mat = np.around(nn_mat.todense(), decimals = 5)
                         E,V = linalg.eigh(nn_mat)
                     except ValueError:
@@ -264,15 +266,6 @@ def compute_matrices(data_volumes, confounds, subject_ids, runs, output_file = "
                     lambdas = res['orig_lambdas']
                     print("Saving...")
                     save_create_dataset(path_to_node, "S", lambdas, f, overwrite)
-                    save_create_dataset(path_to_node, "U", v, f, overwrite)
-
-		
-                
-                
-                
-                    
-
-                    
                 #dset = sgrp.create_dataset("lambdas", lambdas.shape, dtype=lambdas.dtype)
                 #dset[...]=lambdas
                 #dset = sgrp.create_dataset("v", v.shape, dtype=v.dtype)
