@@ -3,9 +3,9 @@ import os.path as op
 import numpy as np
 import pandas as pd
 import numpy.testing as npt
-import diffusion_embed as sb
+import diffusion_embed as de
 
-data_path = op.join(sb.__path__[0], 'data')
+data_path = op.join(de.__path__[0], 'data')
 
 
 def test_transform_data():

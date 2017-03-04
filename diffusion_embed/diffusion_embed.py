@@ -1,17 +1,3 @@
-from __future__ import absolute_import, division, print_function
-import numpy as np
-from scipy.spatial.distance import pdist, squareform
-import scipy.sparse as sps
-from scipy import linalg
-from scipy.sparse.linalg import eigsh, eigs
-
-from nilearn import datasets, plotting
-from nilearn.input_data import NiftiLabelsMasker, NiftiMapsMasker
-from nilearn.connectome import ConnectivityMeasure
-from sklearn.metrics import pairwise_distances
-
-import h5py
-import os
 
 def get_atlas(name):
     if name == "destrieux_2009":
