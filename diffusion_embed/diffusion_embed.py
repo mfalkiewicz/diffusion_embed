@@ -220,7 +220,7 @@ def compute_matrices(data_volumes, confounds, subject_ids, runs, output_file = "
         for atlas in ["destrieux_2009", "harvard_oxford", "aal"]:
             print("using atlas " + atlas)
             for correlation_measure in ["correlation", "partial correlation", "precision"]:
-                print "computing "+correlation_measure+" matrix"
+                print("computing " + correlation_measure + " matrix")
                 path_to_node = str(subject+"/"+run+"/"+atlas+"/"+correlation_measure+"/")
                 if not(path_to_node in f):
                     print("creating group")
