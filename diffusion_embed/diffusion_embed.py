@@ -233,36 +233,45 @@ def compute_matrices(data_volumes, confounds, subject_ids, runs, output_file = "
                 if not(path_to_node in f):
                     print("Creating group...")
                     f.create_group(path_to_node)
-                correlation_matrix = extract_correlation_matrix(data_name, confounds_name, atlas_name = atlas, correlation_type=correlation_measure)
-                #mat = f[subject][run][atlas][correlation_measure]['affinity_matrix'][()]
-                try:
-                    nn_mat = compute_nearest_neighbor_graph(correlation_matrix, n_neighbors = int(round(correlation_matrix.shape[0]*0.1)))
-                    nn_mat = np.around(nn_mat.todense(), decimals = 5)
-                    E,V = linalg.eigh(nn_mat)
-                except ValueError:
-                    E = np.asarray([-1,-1,-1])
-                if not(any(E < 0)) and (np.all(nn_mat.transpose() == nn_mat)):
-                    method='nearest-neighbor'
-                    affinity_matrix = nn_mat
-                else:
-                    method='affinity'
-                    affinity_matrix = compute_affinity(correlation_matrix)
-                embedding, res = compute_diffusion_map(affinity_matrix)
-                v=res['vectors']
-                lambdas = res['orig_lambdas']
+                if (overwrite == True) or not(path_to_node+"correlation" in f):
+                    correlation_matrix = extract_correlation_matrix(data_name, confounds_name, atlas_name = atlas, correlation_type=correlation_measure)
+                    print("Saving...")
+                    save_create_dataset(path_to_node, "correlation", correlation_matrix, f, overwrite)
+                if (overwrite == True) or not(path_to_node+"affinity" in f):
+                    try:
+                        nn_mat = compute_nearest_neighbor_graph(correlation_matrix, n_neighbors = int(round(correlation_matrix.shape[0]*0.1)))
+                        nn_mat = np.around(nn_mat.todense(), decimals = 5)
+                        E,V = linalg.eigh(nn_mat)
+                    except ValueError:
+                        E = np.asarray([-1,-1,-1])
+                    if not(any(E < 0)) and (np.all(nn_mat.transpose() == nn_mat)):
+                        method='nearest-neighbor'
+                        affinity_matrix = nn_mat
+                    else:
+                        method='affinity'
+                        affinity_matrix = compute_affinity(correlation_matrix)
+                    print("Saving...")
+                    save_create_dataset(path_to_node, "affinity", affinity_matrix, f, overwrite)
+                    if not(path_to_node+"affinity_matrix_type" in f):
+                        dset= f[path_to_node].create_dataset("affinity_matrix_type", data = method)
+                    elif overwrite == True:
+                        f[path_to_node+"affinity_matrix_type"][...]=method
+                    else:
+                        print("Node " + path_to_node+ " affinity_matrix_type exists. Skipping...")
+                if (overwrite == True) or not(path_to_node+"S"):
+                    embedding, res = compute_diffusion_map(affinity_matrix)
+                    v=res['vectors']
+                    lambdas = res['orig_lambdas']
+                    print("Saving...")
+                    save_create_dataset(path_to_node, "S", lambdas, f, overwrite)
+                    save_create_dataset(path_to_node, "U", v, f, overwrite)
 
-		print("Saving...")
-                save_create_dataset(path_to_node, "correlation", correlation_matrix, f, overwrite)
-                save_create_dataset(path_to_node, "affinity", affinity_matrix, f, overwrite)
-                save_create_dataset(path_to_node, "S", lambdas, f, overwrite)
-                save_create_dataset(path_to_node, "U", v, f, overwrite)
+		
+                
+                
+                
                     
-                if not(path_to_node+"affinity_matrix_type" in f):
-                    dset= f[path_to_node].create_dataset("affinity_matrix_type", data = method)
-                elif overwrite == True:
-                    f[path_to_node+"affinity_matrix_type"][...]=method
-                else:
-                    print("Node " + path_to_node+ " affinity_matrix_type exists. Skipping...")
+
                     
                 #dset = sgrp.create_dataset("lambdas", lambdas.shape, dtype=lambdas.dtype)
                 #dset[...]=lambdas
