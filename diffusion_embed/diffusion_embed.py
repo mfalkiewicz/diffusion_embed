@@ -220,7 +220,7 @@ def compute_matrices(data_volumes, confounds, subject_ids, runs, output_file = "
         data_name = data_volumes[i]
         confounds_name = confounds[i]
         for atlas in ["destrieux_2009", "harvard_oxford", "aal"]:
-            print "using atlas "+atlas
+            print "using atlas %s" % atlas
             for correlation_measure in ["correlation", "partial correlation", "precision"]:
                 print "computing "+correlation_measure+" matrix"
                 sgrp = f.create_group(subject+"/"+run+"/"+atlas+"/"+correlation_measure)
