@@ -1,17 +1,14 @@
 from __future__ import absolute_import, division, print_function
 import numpy as np
-import pandas as pd
-import scipy.optimize as opt
-from scipy.special import erf
-#from .due import due, Doi
 from scipy.spatial.distance import pdist, squareform
 import scipy.sparse as sps
 from scipy import linalg
+from scipy.sparse.linalg import eigsh, eigs
 
 from nilearn import datasets, plotting
-#from nilearn.input_data import NiftiLabelMasker, NiftiMapsMasker
 from nilearn.input_data import NiftiLabelsMasker, NiftiMapsMasker
 from nilearn.connectome import ConnectivityMeasure
+from sklearn.metrics import pairwise_distances
 
 import h5py
 import os
@@ -57,11 +54,7 @@ def compute_nearest_neighbor_graph(K, n_neighbors=50):
                         A1.indices, A1.indptr))
     return K
 
-
-
 def compute_affinity(X, method='markov', eps=None):
-    import numpy as np
-    from sklearn.metrics import pairwise_distances
     D = pairwise_distances(X, metric='euclidean')
     if eps is None:
         k = int(max(2, np.round(D.shape[0] * 0.01)))
@@ -76,8 +69,6 @@ def compute_affinity(X, method='markov', eps=None):
 """
 
 def compute_markov_matrix(L, alpha=0.5, diffusion_time=0, skip_checks=False, overwrite=False):
-    import numpy as np
-    import scipy.sparse as sps
 
     use_sparse = False
     if sps.issparse(L):
@@ -159,9 +150,6 @@ def compute_diffusion_map(L, alpha=0.5, n_components=None, diffusion_time=0,
 
     M = compute_markov_matrix(L, alpha, diffusion_time, skip_checks, overwrite)
 
-    from scipy.sparse.linalg import eigsh, eigs
-    import numpy as np
-
     ndim = L.shape[0]
 
     # Step 4
@@ -207,11 +195,10 @@ def compute_diffusion_map(L, alpha=0.5, n_components=None, diffusion_time=0,
 
 
 def compute_matrices(data_volumes, confounds, subject_ids, runs, output_file = "embeddings.hdf5"):
-    #get confounds
-    #get data files
-    
-#    data_name = data.func[0]
-#    confounds_name = data.confounds
+    """
+    Main function to compute low-dimensional representations from preprocessed fMRI volumes
+    """
+
     f = h5py.File(output_file, "w")
     
     for i in xrange(len(data_volumes)):
