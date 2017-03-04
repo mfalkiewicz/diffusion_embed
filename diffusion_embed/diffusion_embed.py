@@ -113,7 +113,7 @@ def compute_markov_matrix(L, alpha=0.5, diffusion_time=0, skip_checks=False, ove
 
     return L_alpha
 
-def compute_diffusion_map(L, alpha=0.5, n_components=None, diffusion_time=0,
+def compute_diffusion_map(L, alpha=0.5, n_components=20, diffusion_time=0,
                           skip_checks=False, overwrite=False):
     """ Code by Satra Ghosh (github.com/satra/mapalign)
 
