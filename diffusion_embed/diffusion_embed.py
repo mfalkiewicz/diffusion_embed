@@ -233,23 +233,25 @@ def compute_matrices(data_volumes, confounds, subject_ids, runs, output_file = "
                 if not(path_to_node in f):
                     print("Creating group...")
                     f.create_group(path_to_node)
-                correlation_matrix = extract_correlation_matrix(data_name, confounds_name, atlas_name = atlas, correlation_type=correlation_measure)
-                #mat = f[subject][run][atlas][correlation_measure]['affinity_matrix'][()]
-                try:
-                    nn_mat = compute_nearest_neighbor_graph(correlation_matrix, n_neighbors = int(round(correlation_matrix.shape[0]*0.1)))
-                    nn_mat = np.around(nn_mat.todense(), decimals = 5)
-                    E,V = linalg.eigh(nn_mat)
-                except ValueError:
-                    E = np.asarray([-1,-1,-1])
-                if not(any(E < 0)) and (np.all(nn_mat.transpose() == nn_mat)):
-                    method='nearest-neighbor'
-                    affinity_matrix = nn_mat
-                else:
-                    method='affinity'
-                    affinity_matrix = compute_affinity(correlation_matrix)
-                embedding, res = compute_diffusion_map(affinity_matrix)
-                v=res['vectors']
-                lambdas = res['orig_lambdas']
+                if (overwrite == True) or not(path_to_node+"correlation" in f):
+                    correlation_matrix = extract_correlation_matrix(data_name, confounds_name, atlas_name = atlas, correlation_type=correlation_measure)
+                if (overwrite == True) or not(path_to_node+"affinity" in f):
+                    try:
+                        nn_mat = compute_nearest_neighbor_graph(correlation_matrix, n_neighbors = int(round(correlation_matrix.shape[0]*0.1)))
+                        nn_mat = np.around(nn_mat.todense(), decimals = 5)
+                        E,V = linalg.eigh(nn_mat)
+                    except ValueError:
+                        E = np.asarray([-1,-1,-1])
+                    if not(any(E < 0)) and (np.all(nn_mat.transpose() == nn_mat)):
+                        method='nearest-neighbor'
+                        affinity_matrix = nn_mat
+                    else:
+                        method='affinity'
+                        affinity_matrix = compute_affinity(correlation_matrix)
+                if (overwrite == True) or not(path_to_node+"S"):
+                    embedding, res = compute_diffusion_map(affinity_matrix)
+                    v=res['vectors']
+                    lambdas = res['orig_lambdas']
 
 		print("Saving...")
                 save_create_dataset(path_to_node, "correlation", correlation_matrix, f, overwrite)
