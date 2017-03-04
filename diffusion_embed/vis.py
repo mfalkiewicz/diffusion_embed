@@ -17,5 +17,5 @@ def plot_node(path, filename):
     f = h5py.File(filename, 'r')
     cmat = f[path+'correlation'][()]
     amat = f[path+'affinity'][()]
-    plot_matrix(cmat)
-    plot_matrix(amat, cmap =sns.diverging_palette(240, 10, n=9,as_cmap=True))
+    plot_matrix(cmat, cmap =sns.diverging_palette(240, 10, n=9,as_cmap=True))
+    plot_matrix(amat)
