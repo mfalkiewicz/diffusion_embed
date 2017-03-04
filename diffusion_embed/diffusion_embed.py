@@ -236,7 +236,7 @@ def compute_matrices(data_volumes, confounds, subject_ids, runs, output_file = "
                 correlation_matrix = extract_correlation_matrix(data_name, confounds_name, atlas_name = atlas, correlation_type=correlation_measure)
                 #mat = f[subject][run][atlas][correlation_measure]['affinity_matrix'][()]
                 try:
-                    nn_mat = compute_nearest_neighbor_graph(correlation_matrix)
+                    nn_mat = compute_nearest_neighbor_graph(correlation_matrix, n_neighbors = int(round(correlation_matrix.shape[0]*0.1)))
                     nn_mat = np.around(nn_mat.todense(), decimals = 5)
                     E,V = linalg.eigh(nn_mat)
                 except ValueError:
