@@ -195,13 +195,22 @@ def compute_diffusion_map(L, alpha=0.5, n_components=None, diffusion_time=0,
                   n_components_auto=n_components_auto)
     return embedding, result
 
+def save_create_dataset(path_to_node, dset_name, dset_data, f,overwrite):
+    if not(path_to_node+dset_name in f): 
+        dset = f[path_to_node].create_dataset(dset_name, dset_data.shape, dtype=dset_data.dtype, data = dset_data)
+    elif overwrite==True:
+        f[path_to_node+dset_name][...]=dset_data
+    else:
+        print("the node: " + path_to_node+ dset_name +" is existing. Not overwriting...")
 
-def compute_matrices(data_volumes, confounds, subject_ids, runs, output_file = "embeddings.hdf5"):
+
+def compute_matrices(data_volumes, confounds, subject_ids, runs, output_file = "embeddings.hdf5", overwrite=False):
+
     """
     Main function to compute low-dimensional representations from preprocessed fMRI volumes
     """
 
-    f = h5py.File(output_file, "w")
+    f = h5py.File(output_file, "a")
     
     for i in xrange(len(data_volumes)):
         subject = subject_ids[i]
@@ -209,10 +218,13 @@ def compute_matrices(data_volumes, confounds, subject_ids, runs, output_file = "
         data_name = data_volumes[i]
         confounds_name = confounds[i]
         for atlas in ["destrieux_2009", "harvard_oxford", "aal"]:
-            #print 'using atlas %s' % atlas
+            print("using atlas " + atlas)
             for correlation_measure in ["correlation", "partial correlation", "precision"]:
-                #print "computing "+correlation_measure+" matrix"
-                sgrp = f.create_group(subject+"/"+run+"/"+atlas+"/"+correlation_measure)
+                print "computing "+correlation_measure+" matrix"
+                path_to_node = str(subject+"/"+run+"/"+atlas+"/"+correlation_measure+"/")
+                if not(path_to_node in f):
+                    print("creating group")
+                    f.create_group(path_to_node)
                 correlation_matrix = extract_correlation_matrix(data_name, confounds_name, atlas_name = atlas, correlation_type=correlation_measure)
                 #mat = f[subject][run][atlas][correlation_measure]['affinity_matrix'][()]
                 try:
@@ -231,11 +243,21 @@ def compute_matrices(data_volumes, confounds, subject_ids, runs, output_file = "
                 v=res['vectors']
                 lambdas = res['orig_lambdas']
 
-                dset = sgrp.create_dataset("correlation_matrix", correlation_matrix.shape, dtype=correlation_matrix.dtype)
-                dset[...]=correlation_matrix
-                dset = sgrp.create_dataset("lambdas", lambdas.shape, dtype=lambdas.dtype)
-                dset[...]=lambdas
-                dset = sgrp.create_dataset("v", v.shape, dtype=v.dtype)
-                dset[...]=v
-                dset= sgrp.create_dataset("affinity_matrix_type", data = method)
+                save_create_dataset(path_to_node, "correlation_matrix", correlation_matrix, f,overwrite)
+                save_create_dataset(path_to_node, "lambdas", lambdas, f, overwrite)
+                save_create_dataset(path_to_node, "v", v, f, overwrite)
+                    
+                if not(path_to_node+"affinity_matrix_type" in f):
+                    dset= f[path_to_node].create_dataset("affinity_matrix_type", data = method)
+                elif overwrite == True:
+                    f[path_to_node+"affinity_matrix_type"][...]=method
+                else:
+                    print("the node: " + path_to_node+"affinity_matrix_type is existing. Not overwriting...")
+                    
+                #dset = sgrp.create_dataset("lambdas", lambdas.shape, dtype=lambdas.dtype)
+                #dset[...]=lambdas
+                #dset = sgrp.create_dataset("v", v.shape, dtype=v.dtype)
+                #dset[...]=v
+                #dset= sgrp.create_dataset("affinity_matrix_type", data = method)
     f.close()
+
