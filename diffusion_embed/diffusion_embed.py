@@ -71,6 +71,10 @@ def compute_affinity(X, method='markov', eps=None):
 """
 
 def compute_markov_matrix(L, alpha=0.5, diffusion_time=0, skip_checks=False, overwrite=False):
+    """
+    Computes a markov transition matrix from the affinity matrix.
+    Code written by Satra Ghosh (https://github.com/satra/mapalign)
+    """
 
     use_sparse = False
     if sps.issparse(L):
@@ -111,7 +115,9 @@ def compute_markov_matrix(L, alpha=0.5, diffusion_time=0, skip_checks=False, ove
 
 def compute_diffusion_map(L, alpha=0.5, n_components=None, diffusion_time=0,
                           skip_checks=False, overwrite=False):
-    """Compute the diffusion maps of a symmetric similarity matrix
+    """ Code by Satra Ghosh (github.com/satra/mapalign)
+
+	Compute the diffusion maps of a symmetric similarity matrix
         L : matrix N x N
            L is symmetric and L(x, y) >= 0
         alpha: float [0, 1]
@@ -201,7 +207,7 @@ def save_create_dataset(path_to_node, dset_name, dset_data, f,overwrite):
     elif overwrite==True:
         f[path_to_node+dset_name][...]=dset_data
     else:
-        print("the node: " + path_to_node+ dset_name +" is existing. Not overwriting...")
+        print("Data " + path_to_node+ dset_name +" exists. Skipping...")
 
 
 def compute_matrices(data_volumes, confounds, subject_ids, runs, output_file = "embeddings.hdf5", overwrite=False):
@@ -214,16 +220,18 @@ def compute_matrices(data_volumes, confounds, subject_ids, runs, output_file = "
     
     for i in xrange(len(data_volumes)):
         subject = subject_ids[i]
+        print("Subject %s" % subject)
         run = runs[i]
+        print("Run %s" % run)
         data_name = data_volumes[i]
         confounds_name = confounds[i]
         for atlas in ["destrieux_2009", "harvard_oxford", "aal"]:
-            print("using atlas " + atlas)
+            print("Atlas: %s" % atlas)
             for correlation_measure in ["correlation", "partial correlation", "precision"]:
-                print("computing " + correlation_measure + " matrix")
+                print("Affinity measure: %s" % correlation_measure)
                 path_to_node = str(subject+"/"+run+"/"+atlas+"/"+correlation_measure+"/")
                 if not(path_to_node in f):
-                    print("creating group")
+                    print("Creating group...")
                     f.create_group(path_to_node)
                 correlation_matrix = extract_correlation_matrix(data_name, confounds_name, atlas_name = atlas, correlation_type=correlation_measure)
                 #mat = f[subject][run][atlas][correlation_measure]['affinity_matrix'][()]
@@ -243,16 +251,18 @@ def compute_matrices(data_volumes, confounds, subject_ids, runs, output_file = "
                 v=res['vectors']
                 lambdas = res['orig_lambdas']
 
-                save_create_dataset(path_to_node, "correlation_matrix", correlation_matrix, f,overwrite)
-                save_create_dataset(path_to_node, "lambdas", lambdas, f, overwrite)
-                save_create_dataset(path_to_node, "v", v, f, overwrite)
+		print("Saving...")
+                save_create_dataset(path_to_node, "correlation", correlation_matrix, f, overwrite)
+                save_create_dataset(path_to_node, "affinity", affinity_matrix, f, overwrite)
+                save_create_dataset(path_to_node, "S", lambdas, f, overwrite)
+                save_create_dataset(path_to_node, "U", v, f, overwrite)
                     
                 if not(path_to_node+"affinity_matrix_type" in f):
                     dset= f[path_to_node].create_dataset("affinity_matrix_type", data = method)
                 elif overwrite == True:
                     f[path_to_node+"affinity_matrix_type"][...]=method
                 else:
-                    print("the node: " + path_to_node+"affinity_matrix_type is existing. Not overwriting...")
+                    print("Node " + path_to_node+ " affinity_matrix_type exists. Skipping...")
                     
                 #dset = sgrp.create_dataset("lambdas", lambdas.shape, dtype=lambdas.dtype)
                 #dset[...]=lambdas
